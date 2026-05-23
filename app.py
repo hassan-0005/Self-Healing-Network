@@ -11,7 +11,6 @@ st.set_page_config(page_title="AI Self-Healing NOC", layout="wide", initial_side
 
 # 2. SESSION STATE FOR DATA PERSISTENCE
 if 'ohlc_data' not in st.session_state:
-    # Initial dummy data for candles
     st.session_state.ohlc_data = pd.DataFrame(columns=['Time', 'Open', 'High', 'Low', 'Close'])
 if 'ai_logs' not in st.session_state:
     st.session_state.ai_logs = [f"[{datetime.now().strftime('%H:%M:%S')}] System Cyber-Guard Active."]
@@ -24,10 +23,8 @@ st.markdown("""
     .main { background-color: #050505; color: #e2e8f0; font-family: 'Rajdhani', sans-serif; }
     [data-testid="stHeader"] { background: rgba(0,0,0,0); }
     
-    /* Sidebar styling */
     [data-testid="stSidebar"] { background-color: #080808; border-right: 2px solid #00d4ff; }
     
-    /* Metrics / Cards */
     div[data-testid="stMetric"] {
         background: rgba(10, 20, 30, 0.9);
         border: 1px solid #00d4ff44;
@@ -42,7 +39,6 @@ st.markdown("""
         font-size: 0.8rem !important; 
     }
     
-    /* AI Log Boxes */
     .ai-card {
         background-color: #000;
         border-left: 5px solid #00d4ff;
@@ -63,7 +59,6 @@ st.markdown("""
         color: #ff4444;
     }
 
-    /* Tabs Styling */
     .stTabs [data-baseweb="tab-list"] { gap: 10px; }
     .stTabs [data-baseweb="tab"] {
         background-color: #111;
@@ -83,7 +78,6 @@ st.markdown("""
 # 4. DATA SIMULATION FOR CANDLESTICK
 def update_traffic_data():
     now = datetime.now().strftime('%H:%M:%S')
-    # Generate OHLC values for network traffic
     base = random.randint(60, 90)
     open_val = base + random.uniform(-2, 2)
     close_val = base + random.uniform(-2, 2)
@@ -98,9 +92,8 @@ def update_traffic_data():
         'Close': close_val
     }
     
-    # Update session state dataframe
     st.session_state.ohlc_data = pd.concat([st.session_state.ohlc_data, pd.DataFrame([new_entry])], ignore_index=True)
-    if len(st.session_state.ohlc_data) > 20: # Keep last 20 seconds
+    if len(st.session_state.ohlc_data) > 20:
         st.session_state.ohlc_data = st.session_state.ohlc_data.iloc[1:]
 
 # 5. SIDEBAR - SYSTEM CONTROL
@@ -113,7 +106,7 @@ with st.sidebar:
     auto_refresh = st.checkbox("Live Stream Data", value=True)
     refresh_rate = st.slider("Update Interval (s)", 1, 5, 1)
     if st.button("Purge AI Logs"):
-        st.session_state.ai_logs = []
+        st.session_state.ai_logs = [f"[{datetime.now().strftime('%H:%M:%S')}] Logs Cleared."]
 
 # 6. MAIN TOP NAVIGATION
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -124,7 +117,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 ])
 
 # ---------------------------------------------------------
-# TAB 1: DASHBOARD (Candlestick Chart)
+# TAB 1: DASHBOARD
 # ---------------------------------------------------------
 with tab1:
     st.markdown("<h2 style='color: #00d4ff;'>REAL-TIME NETWORK OVERVIEW</h2>", unsafe_allow_html=True)
@@ -132,36 +125,39 @@ with tab1:
     update_traffic_data()
     
     c1, c2, c3, c4 = st.columns(4)
-    curr = st.session_state.ohlc_data.iloc[-1]
-    c1.metric("CURRENT LOAD", f"{round(curr['Close'], 2)} Mbps")
+    if not st.session_state.ohlc_data.empty:
+        curr = st.session_state.ohlc_data.iloc[-1]
+        c1.metric("CURRENT LOAD", f"{round(curr['Close'], 2)} Mbps")
+    else:
+        c1.metric("CURRENT LOAD", "0.00 Mbps")
+        
     c2.metric("HEALTH SCORE", "99/100")
     c3.metric("LATENCY", f"{random.randint(15, 30)} ms")
     c4.metric("CPU UTIL", f"{psutil.cpu_percent()}%")
 
     st.markdown("### NETWORK TRAFFIC CANDLESTICK ANALYSIS")
     
-    # Plotly Candlestick Chart
-    fig = go.Figure(data=[go.Candlestick(
-        x=st.session_state.ohlc_data['Time'],
-        open=st.session_state.ohlc_data['Open'],
-        high=st.session_state.ohlc_data['High'],
-        low=st.session_state.ohlc_data['Low'],
-        close=st.session_state.ohlc_data['Close'],
-        increasing_line_color='#00d4ff', # Cyan for Up
-        decreasing_line_color='#004466'  # Dark Blue for Down
-    )])
-    
-    fig.update_layout(
-        template="plotly_dark",
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        xaxis_rangeslider_visible=False,
-        margin=dict(l=10, r=10, t=10, b=10),
-        height=400,
-        yaxis_title="Bandwidth Usage (Mbps)"
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
+    if not st.session_state.ohlc_data.empty:
+        fig = go.Figure(data=[go.Candlestick(
+            x=st.session_state.ohlc_data['Time'],
+            open=st.session_state.ohlc_data['Open'],
+            high=st.session_state.ohlc_data['High'],
+            low=st.session_state.ohlc_data['Low'],
+            close=st.session_state.ohlc_data['Close'],
+            increasing_line_color='#00d4ff', 
+            decreasing_line_color='#004466'  
+        )])
+        
+        fig.update_layout(
+            template="plotly_dark",
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            xaxis_rangeslider_visible=False,
+            margin=dict(l=10, r=10, t=10, b=10),
+            height=400,
+            yaxis_title="Bandwidth Usage (Mbps)"
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
 # ---------------------------------------------------------
 # TAB 2: DEVICES
@@ -189,7 +185,8 @@ with tab3:
         if len(st.session_state.ai_logs) > 15: st.session_state.ai_logs.pop()
 
     for log in st.session_state.ai_logs:
-        st.markdown(f<div class='ai-card'>{log}</div>, unsafe_allow_html=True)
+        # Fixed the missing quotes below
+        st.markdown(f"<div class='ai-card'>{log}</div>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # TAB 4: SECURITY
@@ -197,7 +194,7 @@ with tab3:
 with tab4:
     st.markdown("<h2 style='color: #ff4444;'>SECURITY THREAT RADAR</h2>", unsafe_allow_html=True)
     st.error("THREAT LEVEL: LOW")
-    st.markdown("<div class='security-card'>[INFO] Brute force attempt blocked from 192.x.x.x by Blue-Shield AI.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='security-card'>[INFO] Brute force attempt blocked by Blue-Shield AI.</div>", unsafe_allow_html=True)
 
 # --- AUTO REFRESH ---
 if auto_refresh:
