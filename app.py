@@ -5,119 +5,194 @@ import time
 import random
 from datetime import datetime
 
-# --- CONFIG ---
+# 1. PAGE CONFIG
 st.set_page_config(page_title="AI Self-Healing NOC", layout="wide", initial_sidebar_state="expanded")
 
-# --- SESSION STATE (To keep logs alive during refresh) ---
+# 2. SESSION STATE INITIALIZATION
 if 'ai_logs' not in st.session_state:
-    st.session_state.ai_logs = []
-if 'threat_logs' not in st.session_state:
-    st.session_state.threat_logs = []
+    st.session_state.ai_logs = [f"[{datetime.now().strftime('%H:%M:%S')}] System Cyber-Guard Active."]
+if 'threats' not in st.session_state:
+    st.session_state.threats = []
 
-# --- FUTURISTIC CSS ---
+# 3. FUTURISTIC BLUE CSS
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron&family=Rajdhani&display=swap');
+    
     .main { background-color: #050505; color: #e2e8f0; font-family: 'Rajdhani', sans-serif; }
-    [data-testid="stSidebar"] { background-color: #0a0a0a; border-right: 2px solid #ff6600; }
-    .stMetric { background: rgba(15, 15, 15, 0.9); border: 1px solid #ff660044; border-radius: 10px; padding: 15px; box-shadow: 0 0 10px #ff660022; }
-    div[data-testid="metric-container"] label { color: #ff6600 !important; font-family: 'Orbitron'; font-size: 0.7rem; letter-spacing: 1px; }
-    .ai-box { background-color: #000; border-left: 4px solid #ff6600; padding: 12px; margin-bottom: 8px; font-family: 'Courier New'; color: #ffaa00; font-size: 13px; }
-    .security-alert { background-color: #220000; border-left: 4px solid #ff0000; padding: 12px; color: #ff5555; font-weight: bold; }
+    [data-testid="stHeader"] { background: rgba(0,0,0,0); }
+    
+    /* Sidebar styling - BLUE BORDER */
+    [data-testid="stSidebar"] { background-color: #080808; border-right: 2px solid #00d4ff; }
+    
+    /* Metrics / Cards - BLUE GLOW */
+    div[data-testid="stMetric"] {
+        background: rgba(10, 20, 30, 0.9);
+        border: 1px solid #00d4ff44;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);
+    }
+    
+    label[data-testid="stMetricLabel"] { 
+        color: #00d4ff !important; 
+        font-family: 'Orbitron' !important; 
+        font-size: 0.8rem !important; 
+        text-shadow: 0 0 5px #00d4ff;
+    }
+    
+    /* Custom AI Log Boxes - BLUE THEME */
+    .ai-card {
+        background-color: #000;
+        border-left: 5px solid #00d4ff;
+        padding: 10px;
+        margin: 5px 0;
+        font-family: 'Courier New';
+        color: #00d4ff;
+        font-size: 14px;
+        background: linear-gradient(90deg, rgba(0, 212, 255, 0.05) 0%, transparent 100%);
+    }
+    
+    .security-card {
+        background-color: #0a0000;
+        border-left: 5px solid #ff0000;
+        padding: 10px;
+        margin: 5px 0;
+        font-family: 'Courier New';
+        color: #ff4444;
+    }
+
+    /* Tabs Styling */
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
+    .stTabs [data-baseweb="tab"] {
+        background-color: #111;
+        border: 1px solid #00d4ff33;
+        border-radius: 5px 5px 0 0;
+        color: #888;
+        padding: 10px 20px;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #00d4ff22 !important;
+        border-color: #00d4ff !important;
+        color: #00d4ff !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- SIDEBAR ---
-st.sidebar.markdown("<h1 style='color: #ff6600; text-align: center; font-family: Orbitron;'>NOC_AI v4.0</h1>", unsafe_allow_html=True)
-menu = st.sidebar.selectbox("MAIN NAVIGATION", ["DASHBOARD", "DEVICE MONITOR", "AI ENGINE LOGS", "SECURITY MONITOR"])
+# 4. SIDEBAR - SYSTEM CONTROL
+with st.sidebar:
+    st.markdown("<h1 style='color: #00d4ff; font-family: Orbitron; text-align: center; text-shadow: 0 0 10px #00d4ff;'>NOC AI v5.0</h1>", unsafe_allow_html=True)
+    st.divider()
+    st.write("🛰️ **MASTER NODE:** 192.168.1.1")
+    st.write("🔵 **STATUS:** Monitoring")
+    st.divider()
+    auto_refresh = st.checkbox("Live Stream Data", value=True)
+    refresh_rate = st.slider("Update Interval (s)", 1, 5, 2)
+    if st.button("Purge AI Logs"):
+        st.session_state.ai_logs = []
 
-# --- DATA SIMULATION ENGINE ---
-def generate_ai_log():
+# 5. MAIN TOP NAVIGATION
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "💎 DASHBOARD", 
+    "📡 DEVICES", 
+    "🧠 AI ENGINE", 
+    "🛡️ SECURITY", 
+    "📊 ANALYTICS"
+])
+
+# --- DATA HELPER FUNCTIONS ---
+def get_ai_action():
     actions = [
-        "⚠️ High Latency Detected: Re-routing traffic to Node-X",
-        "🚀 Congestion Spike: Auto-throttling background processes",
-        "✅ Path Optimization Complete: Signal Strength +15%",
-        "🔄 Connection Reset: Clearing buffer for IP 192.168.1.5",
-        "🛡️ AI Guard: Filtering suspicious packet headers"
+        "Network latency optimized at Segment-A.",
+        "Blue-Guard AI: Rerouting packets to avoid congestion.",
+        "Security handshake successful for Admin-Node.",
+        "Traffic throttling applied to heavy background processes.",
+        "Encrypted tunnel established for remote workstation.",
+        "AI Engine: Self-healing protocol at 100% efficiency."
     ]
-    new_log = f"[{datetime.now().strftime('%H:%M:%S')}] {random.choice(actions)}"
-    st.session_state.ai_logs.insert(0, new_log)
-    if len(st.session_state.ai_logs) > 15: st.session_state.ai_logs.pop()
+    return f"[{datetime.now().strftime('%H:%M:%S')}] {random.choice(actions)}"
 
-# --- 1. DASHBOARD PAGE ---
-if menu == "DASHBOARD":
-    st.markdown("<h2 style='color: #ff6600; font-family: Orbitron;'>🛰️ LIVE SYSTEM OVERVIEW</h2>", unsafe_allow_html=True)
+# ---------------------------------------------------------
+# TAB 1: DASHBOARD
+# ---------------------------------------------------------
+with tab1:
+    st.markdown("<h2 style='color: #00d4ff;'>REAL-TIME NETWORK OVERVIEW</h2>", unsafe_allow_html=True)
     
-    # Live Metrics
-    col1, col2, col3, col4 = st.columns(4)
-    download = round(random.uniform(50, 95), 2)
-    col1.metric("DOWNLOAD SPEED", f"{download} Mbps", f"{random.randint(-5, 5)}%")
-    col2.metric("NETWORK HEALTH", "98%", "STABLE")
-    col3.metric("PACKET LOSS", f"{round(random.uniform(0.1, 0.4), 2)}%", "-0.01%")
-    col4.metric("CPU LOAD", f"{psutil.cpu_percent()}%", "NORMAL")
+    c1, c2, c3, c4 = st.columns(4)
+    download = round(random.uniform(60, 120), 2)
+    c1.metric("DOWNLOAD", f"{download} Mbps", f"{random.randint(-5, 12)}%")
+    c2.metric("HEALTH SCORE", "99/100", "OPTIMAL")
+    c3.metric("LATENCY", f"{random.randint(15, 35)} ms", "STABLE")
+    c4.metric("CPU UTIL", f"{psutil.cpu_percent()}%", "NORMAL")
 
-    # Traffic Graph
-    st.markdown("### REAL-TIME TRAFFIC DATA")
-    chart_data = pd.DataFrame({'MB/s': [random.randint(40, 100) for _ in range(25)]})
-    st.area_chart(chart_data, color="#ff6600")
+    st.markdown("### 📈 BANDWIDTH CONSUMPTION (LIVE)")
+    # Live chart with BLUE color
+    chart_data = pd.DataFrame({'Data Flow': [random.randint(50, 120) for _ in range(30)]})
+    st.area_chart(chart_data, color="#00d4ff")
 
-    # Quick AI Status
-    st.markdown("###  AI ENGINE STATUS")
-    generate_ai_log()
-    for log in st.session_state.ai_logs[:3]:
-        st.markdown(f"<div class='ai-box'>{log}</div>", unsafe_allow_html=True)
-
-# --- 2. DEVICE MONITOR PAGE ---
-elif menu == "DEVICE MONITOR":
-    st.markdown("<h2 style='color: #ff6600; font-family: Orbitron;'>📱 CONNECTED DEVICES</h2>", unsafe_allow_html=True)
-    devices = [
-        {"Device": "Cisco-Router-01", "IP": "192.168.1.1", "Usage": "2.4 MB/s", "Status": "Active"},
-        {"Device": "Workstation-Office", "IP": "192.168.1.15", "Usage": "0.8 MB/s", "Status": "Active"},
-        {"Device": "Mobile-Android", "IP": "192.168.1.22", "Usage": "1.2 MB/s", "Status": "Active"},
-        {"Device": "Unknown-Device", "IP": "10.0.0.88", "Usage": "52.5 MB/s", "Status": "SUSPICIOUS"},
-    ]
-    df = pd.DataFrame(devices)
-    st.table(df)
+# ---------------------------------------------------------
+# TAB 2: DEVICE MONITOR
+# ---------------------------------------------------------
+with tab2:
+    st.markdown("<h2 style='color: #00d4ff;'>CONNECTED INFRASTRUCTURE</h2>", unsafe_allow_html=True)
+    devices = pd.DataFrame([
+        {"Device": "Cisco-Core-Router", "IP": "192.168.1.1", "Traffic": "Optimal", "Status": "Encrypted"},
+        {"Device": "Workstation-Alpha", "IP": "192.168.1.15", "Traffic": "Steady", "Status": "Safe"},
+        {"Device": "IoT-Gateway", "IP": "192.168.1.22", "Traffic": "Low", "Status": "Safe"},
+        {"Device": "Unknown-Entry", "IP": "10.0.5.12", "Traffic": "SPIKE", "Status": "VERIFYING"},
+    ])
+    st.dataframe(devices, use_container_width=True)
     
-    if st.button("BLOCK SUSPICIOUS IP"):
-        st.error("AI ACTION: IP 10.0.0.88 has been blacklisted.")
+    if st.button("Initiate Hardware Scan"):
+        with st.spinner("Analyzing network packets..."):
+            time.sleep(1)
+            st.info("Scan Complete: 4 Devices identified. No rogue nodes found.")
 
-# --- 3. AI ENGINE PAGE ---
-elif menu == "AI ENGINE LOGS":
-    st.markdown("<h2 style='color: #ff6600; font-family: Orbitron;'>🧠 AI SELF-HEALING ENGINE</h2>", unsafe_allow_html=True)
-    st.info("The AI Engine is currently monitoring all network nodes and automatically repairing connection drops.")
+# ---------------------------------------------------------
+# TAB 3: AI ENGINE (Self-Healing)
+# ---------------------------------------------------------
+with tab3:
+    st.markdown("<h2 style='color: #00d4ff;'>AI SELF-HEALING ENGINE</h2>", unsafe_allow_html=True)
+    st.write("Autonomous AI monitoring active. System is auto-correcting routing tables and buffer sizes.")
     
-    st.markdown("### FULL ACTIVITY LOG")
-    generate_ai_log()
+    if auto_refresh:
+        st.session_state.ai_logs.insert(0, get_ai_action())
+        if len(st.session_state.ai_logs) > 20: st.session_state.ai_logs.pop()
+
+    st.markdown("### 📜 AI COGNITIVE LOGS")
     for log in st.session_state.ai_logs:
-        st.markdown(f"<div class='ai-box'>{log}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='ai-card'>{log}</div>", unsafe_allow_html=True)
 
-# --- 4. SECURITY MONITOR PAGE ---
-elif menu == "SECURITY MONITOR":
-    st.markdown("<h2 style='color: #ff0000; font-family: Orbitron;'>🛡️ SECURITY & THREAT DETECTION</h2>", unsafe_allow_html=True)
+# ---------------------------------------------------------
+# TAB 4: SECURITY MONITOR
+# ---------------------------------------------------------
+with tab4:
+    st.markdown("<h2 style='color: #ff4444;'>SECURITY THREAT RADAR</h2>", unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader("Current Threat Level")
-        st.markdown("<h1 style='color: red; text-align: center;'>LEVEL: MEDIUM</h1>", unsafe_allow_html=True)
-    
+        st.error("THREAT LEVEL: LOW")
+        st.progress(15)
     with col2:
-        st.subheader("Active Mitigation")
-        st.write("✅ Firewall: Enabled")
-        st.write("✅ DDoS Protection: Active")
-        st.write("✅ Packet Inspection: Running")
+        st.info("CYBER-GUARD: ACTIVE")
+        st.write("🛡️ Packet Inspection: 100% Coverage")
+    
+    st.markdown("### 🚨 SECURITY EVENTS")
+    st.markdown("<div class='security-card'>[INFO] Brute force attempt blocked from 192.x.x.x by Blue-Shield.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='ai-card'>[INFO] No new critical threats detected in last 24 hours.</div>", unsafe_allow_html=True)
 
-    st.markdown("### 🚨 SECURITY ALERTS")
-    threats = [
-        "DDoS Simulation detected from IP 185.22.xx.xx",
-        "Rogue Device 'Kali-Linux' attempted to join subnet",
-        "Brute force attempt blocked on Port 22"
-    ]
-    if random.random() > 0.7:
-        st.markdown(f"<div class='security-alert'>[CRITICAL] {random.choice(threats)}</div>", unsafe_allow_html=True)
-    else:
-        st.success("No active cyber threats detected in the last 10 minutes.")
+# ---------------------------------------------------------
+# TAB 5: ANALYTICS
+# ---------------------------------------------------------
+with tab5:
+    st.markdown("<h2 style='color: #00d4ff;'>SYSTEM PERFORMANCE ANALYTICS</h2>", unsafe_allow_html=True)
+    analytics_data = pd.DataFrame({
+        'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        'Efficiency': [85, 88, 92, 85, 99, 97, 98]
+    })
+    st.bar_chart(analytics_data, x='Day', y='Efficiency', color="#007bff")
 
-# --- AUTO REFRESH (Every 2 seconds) ---
-time.sleep(2)
-st.rerun()
+# --- AUTO REFRESH LOGIC ---
+if auto_refresh:
+    time.sleep(refresh_rate)
+    st.rerun()
