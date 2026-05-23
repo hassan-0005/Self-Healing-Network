@@ -22,10 +22,10 @@ st.markdown("""
     .main { background-color: #050505; color: #e2e8f0; font-family: 'Rajdhani', sans-serif; }
     [data-testid="stHeader"] { background: rgba(0,0,0,0); }
     
-    /* Sidebar styling - BLUE BORDER */
+    /* Sidebar styling */
     [data-testid="stSidebar"] { background-color: #080808; border-right: 2px solid #00d4ff; }
     
-    /* Metrics / Cards - BLUE GLOW */
+    /* Metrics / Cards */
     div[data-testid="stMetric"] {
         background: rgba(10, 20, 30, 0.9);
         border: 1px solid #00d4ff44;
@@ -41,7 +41,7 @@ st.markdown("""
         text-shadow: 0 0 5px #00d4ff;
     }
     
-    /* Custom AI Log Boxes - BLUE THEME */
+    /* AI Log Boxes */
     .ai-card {
         background-color: #000;
         border-left: 5px solid #00d4ff;
@@ -83,8 +83,8 @@ st.markdown("""
 with st.sidebar:
     st.markdown("<h1 style='color: #00d4ff; font-family: Orbitron; text-align: center; text-shadow: 0 0 10px #00d4ff;'>NOC AI v5.0</h1>", unsafe_allow_html=True)
     st.divider()
-    st.write("🛰️ **MASTER NODE:** 192.168.1.1")
-    st.write("🔵 **STATUS:** Monitoring")
+    st.write("MASTER NODE: 192.168.1.1")
+    st.write("STATUS: Monitoring")
     st.divider()
     auto_refresh = st.checkbox("Live Stream Data", value=True)
     refresh_rate = st.slider("Update Interval (s)", 1, 5, 2)
@@ -93,11 +93,11 @@ with st.sidebar:
 
 # 5. MAIN TOP NAVIGATION
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "💎 DASHBOARD", 
-    "📡 DEVICES", 
-    "🧠 AI ENGINE", 
-    "🛡️ SECURITY", 
-    "📊 ANALYTICS"
+    "DASHBOARD", 
+    "DEVICES", 
+    "AI ENGINE", 
+    "SECURITY", 
+    "ANALYTICS"
 ])
 
 # --- DATA HELPER FUNCTIONS ---
@@ -125,13 +125,18 @@ with tab1:
     c3.metric("LATENCY", f"{random.randint(15, 35)} ms", "STABLE")
     c4.metric("CPU UTIL", f"{psutil.cpu_percent()}%", "NORMAL")
 
-    st.markdown("### 📈 BANDWIDTH CONSUMPTION (LIVE)")
-    # Live chart with BLUE color
-    chart_data = pd.DataFrame({'Data Flow': [random.randint(50, 120) for _ in range(30)]})
-    st.area_chart(chart_data, color="#00d4ff")
+    st.markdown("### BANDWIDTH CONSUMPTION DOT ANALYSIS")
+    
+    # Dot Graph (Scatter Chart) logic
+    chart_data = pd.DataFrame({
+        'Packet Sequence': range(30),
+        'Data Load': [random.randint(50, 120) for _ in range(30)]
+    })
+    # Using scatter_chart for dot-style visualization
+    st.scatter_chart(chart_data, x='Packet Sequence', y='Data Load', color="#00d4ff")
 
 # ---------------------------------------------------------
-# TAB 2: DEVICE MONITOR
+# TAB 2: DEVICES
 # ---------------------------------------------------------
 with tab2:
     st.markdown("<h2 style='color: #00d4ff;'>CONNECTED INFRASTRUCTURE</h2>", unsafe_allow_html=True)
@@ -159,7 +164,7 @@ with tab3:
         st.session_state.ai_logs.insert(0, get_ai_action())
         if len(st.session_state.ai_logs) > 20: st.session_state.ai_logs.pop()
 
-    st.markdown("### 📜 AI COGNITIVE LOGS")
+    st.markdown("### AI COGNITIVE LOGS")
     for log in st.session_state.ai_logs:
         st.markdown(f"<div class='ai-card'>{log}</div>", unsafe_allow_html=True)
 
@@ -175,9 +180,9 @@ with tab4:
         st.progress(15)
     with col2:
         st.info("CYBER-GUARD: ACTIVE")
-        st.write("🛡️ Packet Inspection: 100% Coverage")
+        st.write("Packet Inspection: 100% Coverage")
     
-    st.markdown("### 🚨 SECURITY EVENTS")
+    st.markdown("### SECURITY EVENTS")
     st.markdown("<div class='security-card'>[INFO] Brute force attempt blocked from 192.x.x.x by Blue-Shield.</div>", unsafe_allow_html=True)
     st.markdown("<div class='ai-card'>[INFO] No new critical threats detected in last 24 hours.</div>", unsafe_allow_html=True)
 
@@ -187,10 +192,11 @@ with tab4:
 with tab5:
     st.markdown("<h2 style='color: #00d4ff;'>SYSTEM PERFORMANCE ANALYTICS</h2>", unsafe_allow_html=True)
     analytics_data = pd.DataFrame({
-        'Day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        'Efficiency': [85, 88, 92, 85, 99, 97, 98]
+        'Node Index': range(15),
+        'Efficiency %': [random.randint(80, 100) for _ in range(15)]
     })
-    st.bar_chart(analytics_data, x='Day', y='Efficiency', color="#007bff")
+    # Dot Graph for Analytics as well
+    st.scatter_chart(analytics_data, x='Node Index', y='Efficiency %', color="#007bff")
 
 # --- AUTO REFRESH LOGIC ---
 if auto_refresh:
